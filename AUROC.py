@@ -85,3 +85,5 @@ def metric_with_ci_mc(y_true, y_pred, n_bootstraps = 1000):
         confidence_upper = unsorted_scores[argsort[int(0.975 * len(argsort))]]
         return [metric_fn(y_true, y_pred), confidence_lower, confidence_upper]
     
+    cis = bootstrapping(sklearn.metrics.cohen_kappa_score, y_true, y_pred)
+    print('Cohen_kappa : {:.4f} ({:.4f}-{:.4f})'.format(cis[0], cis[1], cis[2]))
