@@ -49,3 +49,39 @@ def AUROC_plot(true, scores, title = 'None', color='k', fname = 'None.pdf'):
     
 #AUROC_plot(y_true, y_scores)
 #plt.show()
+
+
+
+
+def metric_with_ci_mc(y_true, y_pred, n_bootstraps = 1000):
+    # AUROC, Sensitivity and Specificity calc.
+    # n=1000 bootstrapping default.
+
+    def bootstrapping(metric_fn, y_true = y_true, y_pred = y_pred):
+        rng_seed = 42  # control reproducibility
+        bootstrapped_scores = []
+        bootstrapped_roc = []
+
+        rng = np.random.RandomState(rng_seed)
+        while len(bootstrapped_scores) < n_bootstraps:
+            # bootstrap by sampling with replacement on the prediction indices
+            indices = rng.randint(0, len(y_pred), len(y_pred))
+            if len(np.unique(y_true[indices])) < 2:
+                # We need at least one positive and one negative sample for ROC AUC
+                # to be defined: reject the sample
+                continue
+            score = metric_fn(y_true[indices], y_pred[indices])
+            bootstrapped_scores.append(score)
+            #print("Bootstrap #{} ROC area: {:0.3f}".format(i + 1, score))
+
+        unsorted_scores = np.array(bootstrapped_scores)
+        argsort = unsorted_scores.argsort()
+
+        # Computing the lower and upper bound of the 90% confidence interval
+        # You can change the bounds percentiles to 0.025 and 0.975 to get
+        # a 95% confidence interval instead.
+
+        confidence_lower = unsorted_scores[argsort[int(0.025 * len(argsort))]]
+        confidence_upper = unsorted_scores[argsort[int(0.975 * len(argsort))]]
+        return [metric_fn(y_true, y_pred), confidence_lower, confidence_upper]
+    
